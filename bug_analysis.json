@@ -1,0 +1,46 @@
+[
+  {
+    "id": "BUG-101",
+    "description": "Login button unresponsive after session timeout on mobile Safari",
+    "analysis": {
+      "root_cause": "Mobile Safari likely freezes event listeners or retains stale session state after timeout, causing the login button click handler to fail silently due to a zombie session object or unresolved promise blocking the event loop",
+      "severity": "high",
+      "test_cases": [
+        "Simulate session timeout on mobile Safari by waiting for session expiry period, then attempt to click the login button and verify it responds and triggers authentication flow",
+        "Force session timeout via API/cookie deletion on mobile Safari, reload the login page, and confirm the login button is clickable and submits credentials successfully",
+        "Test login button responsiveness on mobile Safari after returning to the app from background state post-session timeout to ensure event listeners are re-attached correctly",
+        "Verify login button behavior on mobile Safari when network is restored after being offline during session timeout to rule out network-related handler blocking",
+        "Compare login button click behavior across multiple iOS versions of Safari after session timeout to identify if the issue is version-specific",
+        "Inspect console errors on mobile Safari after session timeout and click attempt to confirm whether a stale promise, null reference, or blocked event handler is logged"
+      ]
+    }
+  },
+  {
+    "id": "BUG-102",
+    "description": "Payment form accepts expired credit cards without validation",
+    "analysis": {
+      "root_cause": "Missing server-side and client-side expiration date validation logic that fails to compare card expiry month/year against current date",
+      "severity": "critical",
+      "test_cases": [
+        "Submit payment form with a credit card expired in a previous month of the current year and verify the form returns a validation error",
+        "Submit payment form with a credit card expired in a previous year and verify the transaction is rejected with an appropriate error message",
+        "Submit payment form with a credit card expiring in the current month and verify it is accepted as valid",
+        "Submit payment form with a future expiry date and confirm successful validation and payment processing",
+        "Attempt to bypass client-side validation by disabling JavaScript and submitting an expired card directly to the server endpoint and verify server-side rejection"
+      ]
+    }
+  },
+  {
+    "id": "BUG-103",
+    "description": "Search results not updating when filter is changed rapidly",
+    "analysis": {
+      "root_cause": "Race condition in async search requests - rapid filter changes trigger multiple concurrent API calls where earlier requests may resolve after later ones, causing stale results to override current results",
+      "severity": "high",
+      "test_cases": [
+        "Change filter rapidly 5 times in quick succession and verify final results match only the last selected filter",
+        "Apply a slow-network throttle and change filters rapidly to confirm the most recent filter result is displayed and not overridden by earlier responses",
+        "Change filter while a search request is in flight and verify the in-flight request is cancelled or ignored when superseded by a newer request"
+      ]
+    }
+  }
+]

@@ -1,0 +1,171 @@
+{
+  "feature": "\nPassword reset flow:\nUser requests reset via email. System sends a time-limited",
+  "plan": {
+    "feature": "Password Reset Flow",
+    "risk_areas": [
+      "Token expiration enforcement",
+      "Single-use token invalidation",
+      "Password complexity validation",
+      "Email delivery and link integrity",
+      "Security against token brute-forcing or enumeration",
+      "Race conditions on simultaneous token use",
+      "User account state during reset process",
+      "Error message information disclosure"
+    ],
+    "test_types_needed": [
+      "positive",
+      "negative",
+      "edge_case",
+      "security"
+    ],
+    "priority": "high",
+    "estimated_cases": 42
+  },
+  "test_cases": {
+    "test_cases": [
+      {
+        "id": "TC-001",
+        "title": "Successful password reset with valid token and compliant password",
+        "type": "positive",
+        "priority": "high",
+        "steps": [
+          "Navigate to the login page and click 'Forgot Password'",
+          "Enter a valid registered email address and submit the form",
+          "Check the email inbox for the reset link",
+          "Click the reset link within 1 hour of generation",
+          "Enter a new password that meets complexity requirements (e.g., min 8 chars, uppercase, lowercase, number, special character)",
+          "Confirm the new password and submit",
+          "Attempt to log in with the new password"
+        ],
+        "expected_result": "Password is successfully updated. User is redirected to a confirmation page or login page. Login with the new password succeeds. Login with the old password fails."
+      },
+      {
+        "id": "TC-002",
+        "title": "Expired token is rejected with appropriate error",
+        "type": "negative",
+        "priority": "high",
+        "steps": [
+          "Request a password reset for a valid registered email",
+          "Wait for the token to expire (simulate expiry by advancing system clock past 1 hour, or use a pre-expired token from the database)",
+          "Click the reset link or navigate to the reset URL with the expired token",
+          "Attempt to submit a new password"
+        ],
+        "expected_result": "System rejects the request and displays a generic error message such as 'This reset link has expired. Please request a new one.' No password change occurs. The error does not reveal internal token details or expiry timestamps."
+      },
+      {
+        "id": "TC-003",
+        "title": "Already-used token is invalidated and rejected on second use",
+        "type": "negative",
+        "priority": "high",
+        "steps": [
+          "Request a password reset for a valid registered email",
+          "Click the reset link and successfully reset the password using the token",
+          "Copy the same reset URL and attempt to navigate to it again",
+          "Attempt to submit a new password using the already-used token"
+        ],
+        "expected_result": "System rejects the second use and displays an error such as 'This reset link has already been used. Please request a new one.' No password change occurs. The token is permanently invalidated after the first successful use."
+      },
+      {
+        "id": "TC-004",
+        "title": "Password complexity requirements are enforced during reset",
+        "type": "negative",
+        "priority": "high",
+        "steps": [
+          "Request a password reset and obtain a valid token",
+          "Navigate to the reset link",
+          "Attempt to submit each of the following non-compliant passwords one at a time: (a) too short, e.g. '123', (b) no uppercase letters, e.g. 'password1!', (c) no numbers, e.g. 'Password!', (d) no special characters, e.g. 'Password1', (e) only whitespace characters",
+          "Observe the response for each attempt"
+        ],
+        "expected_result": "Each non-compliant password submission is rejected with a clear, specific validation error describing which complexity requirement was not met. The token remains valid after failed attempts. No password change occurs."
+      },
+      {
+        "id": "TC-005",
+        "title": "Race condition: simultaneous use of the same token is handled safely",
+        "type": "edge_case",
+        "priority": "high",
+        "steps": [
+          "Request a password reset and obtain a valid token",
+          "Prepare two simultaneous HTTP POST requests to the password reset endpoint using the same token and different new passwords",
+          "Fire both requests at the same time (e.g., using parallel threads or a load testing tool)",
+          "Observe which requests succeed and which fail",
+          "Check the final state of the user's password in the system"
+        ],
+        "expected_result": "Only one request succeeds and changes the password. The second request is rejected with a 'token already used' error. The token is atomically invalidated to prevent double use. The user's account ends up in a consistent state with exactly one new password applied."
+      },
+      {
+        "id": "TC-006",
+        "title": "Token brute-force is mitigated by rate limiting",
+        "type": "security",
+        "priority": "high",
+        "steps": [
+          "Identify the password reset token validation endpoint",
+          "Craft a script to send a high volume of requests (e.g., 100+ per minute) to the endpoint with randomly generated or enumerated token values",
+          "Observe the system's response after exceeding a reasonable threshold"
+        ],
+        "expected_result": "System implements rate limiting or account lockout on the reset endpoint. Requests exceeding the threshold are blocked or throttled (e.g., HTTP 429 Too Many Requests). An alert or log entry is generated for suspicious activity. Brute-forcing tokens within the token's lifetime is computationally infeasible due to sufficient token entropy (recommend 128+ bits)."
+      },
+      {
+        "id": "TC-007",
+        "title": "Password reset request for non-existent email does not disclose account existence",
+        "type": "security",
+        "priority": "high",
+        "steps": [
+          "Navigate to the 'Forgot Password' page",
+          "Enter an email address that is not registered in the system and submit",
+          "Observe the response message",
+          "Compare the response (message, HTTP status code, and response time) to a request made with a valid registered email"
+        ],
+        "expected_result": "The system displays the same generic response regardless of whether the email is registered, e.g., 'If this email is associated with an account, you will receive a reset link.' No email is sent for non-existent accounts. Response time and status code are identical to the valid-email flow to prevent timing-based enumeration."
+      },
+      {
+        "id": "TC-008",
+        "title": "New reset request invalidates all previously issued active tokens for the same account",
+        "type": "edge_case",
+        "priority": "high",
+        "steps": [
+          "Request a password reset for a valid email and record the first reset link (Token A)",
+          "Without using Token A, request another password reset for the same email and record the second reset link (Token B)",
+          "Attempt to use Token A to reset the password",
+          "Observe the result",
+          "Attempt to use Token B to reset the password"
+        ],
+        "expected_result": "Token A is invalidated when Token B is issued. Using Token A results in an error such as 'This reset link is no longer valid.' Token B successfully allows the password to be reset. This prevents old links from being exploited if a reset email is intercepted."
+      }
+    ]
+  },
+  "review": {
+    "verdict": "approved",
+    "coverage_score": 89,
+    "issues": [
+      "TC-004 does not verify that the token remains valid after multiple failed password complexity attempts at the backend level, only asserts it in expected results without a verification step to re-use the token successfully afterward",
+      "TC-001 does not explicitly verify that the reset token is invalidated after successful use (this overlap with TC-003 is fine, but TC-001's expected result should state token invalidation as a direct assertion, not leave it implicit)",
+      "TC-002 relies on system clock manipulation or pre-seeded DB state but does not address the test data setup prerequisites, making it fragile and environment-dependent without a documented prerequisite section",
+      "TC-005 lacks a rollback or cleanup step to restore the account to a known state after the race condition test, risking test environment pollution for subsequent cases",
+      "TC-006 does not specify what constitutes the rate limit threshold to test against, leaving the pass/fail criterion ambiguous for different environment configurations",
+      "TC-007 does not include a step to measure and compare response times programmatically, which is required to validate the anti-timing-enumeration assertion in the expected result",
+      "No test case covers the UX flow where the user is already logged in and requests a password reset, which may have different session handling behavior",
+      "No test case validates the format and delivery of the reset email itself (e.g., correct recipient, link format, sender identity, no token leakage in email headers)"
+    ],
+    "missing_scenarios": [
+      "Password reset link accessed over HTTP instead of HTTPS should be rejected or redirected, verifying transport security enforcement",
+      "New password must not be the same as the current password, if such a policy exists (reuse prevention for immediate reuse)",
+      "Password reset token submitted via tampered or malformed URL (e.g., truncated token, injected characters, URL-encoded payloads) to validate input sanitization and error handling",
+      "User attempts to reset password but their account has been disabled or locked, verifying that the reset flow does not inadvertently re-enable the account",
+      "Reset email delivery validation: correct email is sent to the correct address, link is well-formed, and the token in the link matches the one stored server-side",
+      "Session invalidation after password reset: all existing active sessions for the user should be terminated upon successful password change",
+      "Accessibility and usability of error messages on the reset form for screen readers and assistive technologies",
+      "Password confirmation field mismatch during reset (new password and confirm password fields do not match) displays an appropriate inline error"
+    ],
+    "approved_cases": [
+      "TC-001",
+      "TC-002",
+      "TC-003",
+      "TC-004",
+      "TC-005",
+      "TC-006",
+      "TC-007",
+      "TC-008"
+    ]
+  },
+  "report": "QA TEST REPORT: PASSWORD RESET FLOW\nPriority: High\n\n\nSUMMARY\n\nTesting of the Password Reset Flow produced 8 test cases against a planned estimate of 42, covering positive, negative, edge case, and security scenarios. All 8 cases received approval with a coverage score of 89 out of 100. While the cases address the core risk areas adequately, the significant gap between planned and generated cases means several important scenarios remain untested.\n\n\nCOVERAGE\n\nThe approved cases address token expiration, single-use invalidation, password complexity, race conditions, brute-force rate limiting, timing-based enumeration, and basic error handling. Eight of the identified risk areas have at least partial representation. However, session invalidation post-reset, email delivery validation, HTTP versus HTTPS enforcement, account state edge cases, and input sanitization against malformed tokens are not covered by any current test case.\n\n\nKEY RISKS\n\nTC-002 is fragile due to undocumented prerequisites around clock manipulation or database seeding, making it unreliable across environments. TC-005 lacks cleanup steps after the race condition test, creating a risk of polluting the test environment for downstream cases. TC-006 has an ambiguous pass/fail threshold for rate limiting that will vary by environment configuration. TC-007 does not include programmatic response time measurement, undermining the timing enumeration assertion. No cases validate session termination after a successful reset, email integrity, or behavior when a locked or disabled account initiates a reset.\n\n\nRECOMMENDATIONS\n\nDocument explicit setup and teardown prerequisites for TC-002 and TC-005 before execution. Define a concrete rate limit threshold for TC-006 tied to environment configuration. Add programmatic timing checks to TC-007. Write new test cases to cover the eight missing scenarios identified in the review, prioritizing session invalidation, email delivery validation, HTTPS enforcement, disabled account behavior, and malformed token input. Close the gap between the 8 generated cases and the 42 planned to reach acceptable coverage for a high-priority feature."
+}

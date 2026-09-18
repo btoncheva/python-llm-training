@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "prompt": "In one sentence, what is a Python virtual environment?"
+    },
+    {
+        "id": 2,
+        "prompt": "In one sentence, what is the difference between a list and a dict in Python?"
+    },
+    {
+        "id": 3,
+        "prompt": "In one sentence, why is JSON important for API communication?"
+    }
+]

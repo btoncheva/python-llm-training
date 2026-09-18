@@ -1,0 +1,65 @@
+[
+  {
+    "id": "BUG-101",
+    "description": "Login button unresponsive after session timeout on mobile Safari",
+    "analysis": {
+      "reasoning": "Mobile Safari has known quirks with session handling, event listeners, and JavaScript execution after periods of inactivity. After a session timeout, the page may be in a stale state where event listeners are detached, JavaScript execution context is disrupted, or the page is served from bfcache (back-forward cache) without proper reinitialization. Mobile Safari's aggressive memory management and bfcache behavior can cause UI elements to appear rendered but functionally broken. The login button may visually appear enabled but lack active event handlers.",
+      "root_cause": "Session timeout handling fails to reinitialize JavaScript event listeners on Mobile Safari, likely due to bfcache page restoration or stale execution context not triggering proper re-binding of click handlers on the login button",
+      "severity": "high",
+      "affected_area": "authentication",
+      "test_cases": [
+        "Log in on Mobile Safari, let session timeout, attempt to click login button and verify it responds",
+        "Simulate session timeout via network throttling on Mobile Safari and verify login button click triggers authentication flow",
+        "Navigate away and return via back button after session timeout on Mobile Safari and verify login button is functional",
+        "Verify login button event listeners are re-attached after session expiry on Mobile Safari using browser dev tools",
+        "Test session timeout behavior on Mobile Safari with bfcache enabled and verify page reinitialization occurs",
+        "Verify pageshow event handler correctly reloads or reinitializes the page after session timeout on Mobile Safari",
+        "Compare login button responsiveness after session timeout across Chrome iOS, Firefox iOS, and Mobile Safari",
+        "Test with different session timeout durations (5 min, 15 min, 30 min) to reproduce the unresponsive login button on Mobile Safari",
+        "Verify that a hard page refresh after session timeout restores login button functionality on Mobile Safari",
+        "Check console for JavaScript errors on Mobile Safari after session timeout when login button is clicked"
+      ]
+    }
+  },
+  {
+    "id": "BUG-102",
+    "description": "Payment form accepts expired credit cards without validation",
+    "analysis": {
+      "reasoning": "The payment form lacks client-side and/or server-side validation for credit card expiry dates. This is a critical security and functional issue as it allows transactions to be attempted with expired cards, leading to failed payments, poor user experience, and potential financial/compliance risks. The expiry date field is not being compared against the current date before form submission.",
+      "root_cause": "Missing expiration date validation logic that compares the card's month/year against the current date on both client-side form submission and server-side processing",
+      "severity": "critical",
+      "affected_area": "payment-processing",
+      "test_cases": [
+        "Submit payment form with a card expiry date in a past month of the current year and verify rejection",
+        "Submit payment form with a card expiry date in a past year and verify rejection",
+        "Submit payment form with a card expiry date in the current month and year and verify acceptance",
+        "Submit payment form with a card expiry date in a future month and verify acceptance",
+        "Verify appropriate error message is displayed when an expired card date is entered",
+        "Verify expiry date field does not allow month values greater than 12",
+        "Test boundary condition where card expires exactly in the current month and verify it is treated as valid",
+        "Bypass client-side validation and submit expired card data directly via API and verify server-side rejection",
+        "Verify that form submission is blocked and no payment request is sent to the payment gateway when card is expired",
+        "Test with expiry date format variations (MM/YY, MM/YYYY) to ensure validation handles all accepted formats"
+      ]
+    }
+  },
+  {
+    "id": "BUG-103",
+    "description": "Search results not updating when filter is changed rapidly",
+    "analysis": {
+      "reasoning": "Rapid filter changes suggest a race condition or debounce issue. When filters are changed quickly, multiple async requests may be fired simultaneously, and responses may arrive out of order, causing stale or incorrect results to be displayed. The UI may also fail to cancel previous pending requests before issuing new ones.",
+      "root_cause": "Missing debounce mechanism and/or lack of request cancellation (e.g., AbortController) for superseded async search requests, leading to race conditions with out-of-order API responses",
+      "severity": "high",
+      "affected_area": "search-and-filtering",
+      "test_cases": [
+        "Rapidly change filter values in quick succession and verify the final displayed results match only the last applied filter",
+        "Change filter multiple times within 300ms and verify no stale results from earlier requests are shown",
+        "Apply a slow-network simulation, change filters rapidly, and confirm only the most recent request result is rendered",
+        "Verify that pending API requests are cancelled when a new filter change is triggered before the previous response returns",
+        "Change a single filter repeatedly and verify the result count and items are consistent with the last selected filter value",
+        "Apply multiple different filters rapidly and verify no duplicate or mixed result sets appear in the UI",
+        "Verify loading indicators are correctly shown and hidden during rapid filter changes without flickering or getting stuck"
+      ]
+    }
+  }
+]

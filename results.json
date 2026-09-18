@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "In one sentence, what is a Python virtual environment?",
+    "response": "A Python virtual environment is an isolated directory that contains its own Python interpreter and dependencies, allowing different projects to have separate package installations without conflicts."
+  },
+  {
+    "id": 2,
+    "prompt": "In one sentence, what is the difference between a list and a dict in Python?",
+    "response": "A **list** is an ordered collection of items accessed by numerical index, while a **dict** is an unordered collection of key-value pairs accessed by unique keys."
+  },
+  {
+    "id": 3,
+    "prompt": "In one sentence, why is JSON important for API communication?",
+    "response": "JSON is important for API communication because it provides a lightweight, human-readable, and universally supported data format that allows different systems and programming languages to easily exchange and parse structured data."
+  }
+]

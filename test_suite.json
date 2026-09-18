@@ -1,0 +1,109 @@
+{
+  "feature": "User Registration Flow",
+  "test_suite": [
+    {
+      "id": "TC-001",
+      "title": "Verify successful registration with valid email and password",
+      "type": "positive",
+      "priority": "high",
+      "steps": [
+        "Navigate to the registration page",
+        "Enter a valid unique email address (e.g., user@example.com)",
+        "Enter a valid password meeting all requirements (e.g., Password1!)",
+        "Click the Register button"
+      ],
+      "expected_result": "Registration succeeds, a confirmation email is sent to the provided address, and the account is created in an inactive state"
+    },
+    {
+      "id": "TC-002",
+      "title": "Verify account remains inactive until email is confirmed",
+      "type": "positive",
+      "priority": "high",
+      "steps": [
+        "Complete registration with valid credentials",
+        "Attempt to log in immediately without confirming the email",
+        "Check the confirmation email and click the confirmation link",
+        "Attempt to log in again after confirming the email"
+      ],
+      "expected_result": "Login attempt before confirmation fails with an account-inactive message; login attempt after confirmation succeeds and user is redirected to the dashboard"
+    },
+    {
+      "id": "TC-003",
+      "title": "Verify registration fails with a duplicate email address",
+      "type": "negative",
+      "priority": "high",
+      "steps": [
+        "Navigate to the registration page",
+        "Enter an email address already associated with an existing account",
+        "Enter a valid password (e.g., Password1!)",
+        "Click the Register button"
+      ],
+      "expected_result": "Registration fails and an error message is displayed indicating the email address is already in use"
+    },
+    {
+      "id": "TC-004",
+      "title": "Verify registration fails with an invalid email format",
+      "type": "negative",
+      "priority": "high",
+      "steps": [
+        "Navigate to the registration page",
+        "Enter an improperly formatted email address (e.g., userexample.com, user@, @example.com)",
+        "Enter a valid password (e.g., Password1!)",
+        "Click the Register button"
+      ],
+      "expected_result": "Registration fails and a validation error message is displayed indicating the email format is invalid"
+    },
+    {
+      "id": "TC-005",
+      "title": "Verify registration fails when password does not meet complexity requirements",
+      "type": "negative",
+      "priority": "high",
+      "steps": [
+        "Navigate to the registration page",
+        "Enter a valid unique email address",
+        "Attempt registration with each of the following weak passwords: 'password' (no uppercase/number/special), 'Password1' (no special character), 'Pass1!' (less than 8 characters), 'PASSWORD1!' (no lowercase)",
+        "Click the Register button after each attempt"
+      ],
+      "expected_result": "Each registration attempt fails with a descriptive validation error indicating which password requirement was not met"
+    },
+    {
+      "id": "TC-006",
+      "title": "Verify registration with edge case password of exactly 8 characters meeting all requirements",
+      "type": "edge_case",
+      "priority": "medium",
+      "steps": [
+        "Navigate to the registration page",
+        "Enter a valid unique email address",
+        "Enter a password that is exactly 8 characters and satisfies all rules (e.g., Pass1!ab)",
+        "Click the Register button"
+      ],
+      "expected_result": "Registration succeeds, confirming that the minimum boundary of 8 characters is accepted"
+    },
+    {
+      "id": "TC-007",
+      "title": "Verify registration form is not vulnerable to SQL injection via email field",
+      "type": "security",
+      "priority": "high",
+      "steps": [
+        "Navigate to the registration page",
+        "Enter a SQL injection payload in the email field (e.g., ' OR '1'='1'; --)",
+        "Enter a valid password (e.g., Password1!)",
+        "Click the Register button"
+      ],
+      "expected_result": "Registration fails gracefully with an invalid email format error; no database error is exposed and the application remains stable"
+    },
+    {
+      "id": "TC-008",
+      "title": "Verify system performance under concurrent registration requests",
+      "type": "performance",
+      "priority": "medium",
+      "steps": [
+        "Prepare 100 unique valid user registration payloads",
+        "Simulate 100 concurrent registration requests using a load testing tool (e.g., JMeter or k6)",
+        "Monitor server response times, error rates, and confirmation email dispatch",
+        "Record results and compare against defined SLA thresholds"
+      ],
+      "expected_result": "All 100 registrations complete successfully with response times under 2 seconds, no errors occur, and all confirmation emails are dispatched without significant delay"
+    }
+  ]
+}

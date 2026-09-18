@@ -1,0 +1,73 @@
+[
+  {
+    "test_id": "TC001",
+    "description": "Successful login with valid credentials",
+    "email": "john.doe@example.com",
+    "password": "SecurePass@123",
+    "remember_me": false,
+    "failed_attempts_before": 0,
+    "account_locked": false,
+    "expected_result": "Login successful",
+    "expected_session_duration_minutes": 30
+  },
+  {
+    "test_id": "TC002",
+    "description": "Failed login due to incorrect password case sensitivity",
+    "email": "jane.smith@example.com",
+    "password": "securepass@123",
+    "correct_password": "SecurePass@123",
+    "remember_me": false,
+    "failed_attempts_before": 0,
+    "account_locked": false,
+    "expected_result": "Login failed - Invalid credentials",
+    "expected_session_duration_minutes": null
+  },
+  {
+    "test_id": "TC003",
+    "description": "Account lockout on 5th consecutive failed attempt",
+    "email": "locked.user@example.com",
+    "password": "WrongPassword!",
+    "remember_me": false,
+    "failed_attempts_before": 4,
+    "account_locked": false,
+    "expected_result": "Account locked for 15 minutes after 5th failed attempt",
+    "expected_lockout_duration_minutes": 15,
+    "expected_session_duration_minutes": null
+  },
+  {
+    "test_id": "TC004",
+    "description": "Login attempt on already locked account within lockout window",
+    "email": "locked.user@example.com",
+    "password": "CorrectPassword@99",
+    "remember_me": false,
+    "failed_attempts_before": 5,
+    "account_locked": true,
+    "minutes_since_lockout": 7,
+    "expected_result": "Login denied - Account is locked. Try again in 8 minutes.",
+    "expected_session_duration_minutes": null
+  },
+  {
+    "test_id": "TC005",
+    "description": "Successful login with Remember Me option enabled",
+    "email": "remember.me@example.com",
+    "password": "LongSession#456",
+    "remember_me": true,
+    "failed_attempts_before": 0,
+    "account_locked": false,
+    "expected_result": "Login successful with extended session",
+    "expected_session_duration_minutes": 10080
+  },
+  {
+    "test_id": "TC006",
+    "description": "Session expiry after 30 minutes of inactivity without Remember Me",
+    "email": "inactive.user@example.com",
+    "password": "ActivePass$789",
+    "remember_me": false,
+    "failed_attempts_before": 0,
+    "account_locked": false,
+    "initial_login": "successful",
+    "inactivity_duration_minutes": 31,
+    "expected_result": "Session expired - User redirected to login page",
+    "expected_session_duration_minutes": 30
+  }
+]

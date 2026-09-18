@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-06-23T14:11:50.915396",
+  "feature": "\nUser Login Flow:\nUsers log in with email and password.\nAfter 5 failed attempts ",
+  "summary": {
+    "test_cases_generated": 0,
+    "test_data_records": 0,
+    "failure_patterns_found": 0
+  },
+  "files": [
+    "test_suite.json",
+    "test_data.json",
+    "failure_analysis.json"
+  ]
+}
